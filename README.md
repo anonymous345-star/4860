@@ -1,7 +1,7 @@
 # 4860
-This repo contaisn the code to replicate my thesis. Access to data and charts can be arranged upon request.
+This repo contains the code to replicate my thesis. Access to data and charts can be arranged upon request.
 
-Code is available in the R directory. There are 4 R scripts.
+Code is available in the R directory. There are 4 R scripts:
 
 1. Process AQ Data loads, formats, and fills in the missing AOD data. It then matches it with PM2.5 data.
 
