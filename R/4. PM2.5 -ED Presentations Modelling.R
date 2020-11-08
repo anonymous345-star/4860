@@ -31,7 +31,7 @@ stage_2_data.sf <- pm25_seperated.sf
 ##### Hospital Processing -------
 # Load Hospital Location Data
 projcrs <- 4283
-hospital_sf <- read_csv("Hospital Data here") %>%
+hospital_sf <- read_csv("~/Documents/ETC4860/Data/Hospital Data/hospital_locations.csv") %>%
   st_as_sf(coords = c('lon','lat'),
            crs = projcrs)
 # Download SA3 maps from ABS
@@ -141,13 +141,17 @@ stage_2_final_data.sf <- stage_2_final_data %>%
          id = paste0(hospital," - ",age),
          n = as.integer(n)) %>%
 mutate(age = as_factor(age),
+         weekend = ifelse(weekdays(date) %in% c('Saturday','Sunday'),"Weekend","Weekday"),
          hospital = as_factor(hospital)) %>%
-  filter("Hospital filtering here") %>% 
+  filter(!(hospital == 'Mercy Hosp Women' & age != '18 to 64'), # MHW is a neonatal intensive care so there are very few old/young patients
+         !(hospital == 'Royal Womens' & age != '18 to 64'), # Is a neonatal ICU
+         !(hospital == 'RCH' & age != '0 to 17'), # Is a children's hospital
+         !(hospital == 'St Vincents' & age == '0 to 17')) %>% # Is next to a children's hospital
   as.data.frame() 
 names(stage_2_final_data.sf$fire_pm25) <- NULL
 # Fit model
 
-test_model_feglm <- glm.nb(n ~ hospital+age+(age*hospital)*fire_pm25+(age*hospital)*background_pm25+age*d2m+age*t2m,
+test_model_feglm <- glm.nb(n ~ hospital+age+(age*hospital)*fire_pm25+(age*hospital)*background_pm25+age*d2m+age*t2m+weekend,
                               data = stage_2_final_data.sf) 
 
 # Counterfactual dataset where fire pm2.5 is zero
@@ -189,3 +193,58 @@ sim_agg.alternative <- simulation_data.alternative %>%
 sim_agg.joined <- sim_agg.alternative %>%
   cbind(sim_agg) %>%
   select(age,date,hospital,sim_number,n,n.alt,fire_pm25)
+  
+density_data <- sim_agg.joined %>%
+  group_by(age,sim_number) %>%
+  summarise(diff = sum(n)/sum(n.alt)-1)
+
+density_data_hospital <- sim_agg.joined %>%
+  group_by(hospital,sim_number,age) %>%
+  summarise(diff = sum(n)/sum(n.alt)-1)
+
+  
+total_excess <- sim_agg.joined %>%
+  group_by(sim_number) %>%
+  summarise(diff = sum(n)-sum(n.alt))
+
+
+sim_agg.joined %>%
+  group_by(sim_number) %>%
+  summarise(diff = sum(n)-sum(n.alt)) %>%
+  group_by() %>%
+  summarise(per_pos = sum(diff <= 0),
+            med = median(diff),
+            q_2.5 = quantile(diff,0.025),
+            q_075 = quantile(diff,0.975))
+
+### Ages
+
+sim_agg.joined %>%
+  mutate(urban = hospital %in% c('Alfred','RVEEH','RMH','RCH','St Vincents','Royal Womens')) %>%
+  group_by(sim_number,age) %>%
+  summarise(exc_rl = (sum(n)-sum(n.alt))/sum(n.alt)) %>%
+  group_by(age) %>%
+  summarise(per_pos = mean(exc_rl <= 0),
+            med = median(exc_rl),
+            q_2.5 = quantile(exc_rl,0.025),
+            q_075 = quantile(exc_rl,0.975))
+
+sim_agg.joined %>%
+  mutate(urban = hospital %in% c('Alfred','RVEEH','RMH','RCH','St Vincents','Royal Womens')) %>%
+  group_by(sim_number,urban,age) %>%
+  summarise(exc_rl = (sum(n)-sum(n.alt))/sum(n.alt)) %>%
+  group_by(age,urban) %>%
+  summarise(per_pos = mean(exc_rl <= 0),
+            med = median(exc_rl),
+            q_2.5 = quantile(exc_rl,0.025),
+            q_075 = quantile(exc_rl,0.975))
+
+a = sim_agg.joined %>%
+  group_by(sim_number,date) %>%
+  summarise(diff = sum(n)-sum(n.alt)) %>%
+  group_by(date) %>%
+  summarise(per_pos = sum(diff <= 0),
+            med = median(diff),
+            q_2.5 = quantile(diff,0.025),
+            q_075 = quantile(diff,0.975)) %>%
+  arrange(desc(med))

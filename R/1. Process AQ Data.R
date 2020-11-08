@@ -18,13 +18,13 @@ crs_global <- 4283
 
 ##### Read in 47 um raster list (this was processed on a Windows VM) 
 
-AOD_47_2020 <- readRDS("AOD Raster Here")
-AOD_47_2019 <- readRDS("AOD Raster Here")
+AOD_47_2020 <- readRDS("Data/AOD 2015-2019/aod_list_47_2020.rda")
+AOD_47_2019 <- readRDS("Data/AOD 2015-2019/aod_list_47_2019.rda")
 
 ##### Read in 47 um raster file names (this was processed on a Windows VM) 
 
-file_list_2020 <- readRDS("File List Here")
-file_list_2019 <- readRDS("File List Here")
+file_list_2020 <- readRDS("Data/AOD 2015-2019/file_list_2020.rda")
+file_list_2019 <- readRDS("Data/AOD 2015-2019/file_list_2019.rda")
 ##### Find number of days in sample
 
 len_2020 <- nchar(file_list_2020[[1]])
@@ -47,7 +47,7 @@ dates_all <- c(dates_processed_2019[as.Date(dates_raw_2019, format="%Y%j", tz="U
 
 #### Load air quality (PM2.5 data)
 
-load("PM2.5 Data Here")
+load("Data/Air Quality/aq_hourly.Rda")
 
 ##### Download a map of Victoria
 

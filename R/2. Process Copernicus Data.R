@@ -15,7 +15,7 @@ library(lubridate)
 # New ---------------
 
 ### File names
-file1 <- 'Meterological Data Here'
+file1 <- 'Data/data_final/meterological_data.nc'
 
 ### Read Data (File 1)
 #### Load as a brick to get file names
